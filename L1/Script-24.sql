@@ -1,0 +1,4 @@
+USE Chinook;
+ALTER TABLE Customer
+ADD FavGenre INT NULL
+DEFAULT NULL;

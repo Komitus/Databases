@@ -1,0 +1,22 @@
+db.zespol.insertOne(
+   { "id" : 11,
+   	 "nazwa" : "AC/DC",
+     "liczbaAlbumow" : 2,
+     "miejsceZalozenia" : { "kraj" : "Australia", "miasto" : "Sydney" }
+   }
+)
+
+db.zespol.insertOne(
+   { "id" : 12,
+     "nazwa" : "TestBand1",
+     "liczbaAlbumow" : 3,
+     "miejsceZalozenia" : { "kraj" : "Macedonia", "miasto" : "TestCity1" }
+   }
+)
+db.zespol.insertOne(
+   { "id" : 13,
+     "nazwa" : "TestBand2",
+     "liczbaAlbumow" : 7,
+     "miejsceZalozenia" : { "kraj" : "Macedonia", "miasto" : "TestCity2" }
+   }
+)

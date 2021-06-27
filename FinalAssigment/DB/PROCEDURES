@@ -1,0 +1,95 @@
+delimiter //
+create procedure addKlient(imie varchar(90), nazwisko varchar(90), podanyLogin varchar(90), haslo varchar(90), phoneNumb varchar(9) )
+begin
+	select count(id)  into @powtorzenie FROM klienci where login = podanyLogin; 
+	if @powtorzenie < 1 then 
+			set @q = "insert into klienci(login, haslo, imie, nazwisko, phoneNumb) values (?, ?, ?, ?, ?)";
+			prepare stmt from @q;
+			set @haslo = (select md5(haslo));
+			execute stmt using podanyLogin, @haslo, imie, nazwisko, phoneNumb;
+			deallocate prepare stmt;
+			select 'success' as resultat;		
+	else select 'failure' as resultat; 
+	End if;
+end
+delimiter ;
+#drop procedure addKlient;
+
+GRANT EXECUTE ON PROCEDURE `rental_company`.addKlient TO 'user'@'localhost';
+
+delimiter //
+create procedure loginKlient(login varchar(90), haslo varchar(90))
+begin
+	select 0 into @idKlienta;
+	set @q = "SELECT id into @idKlienta FROM klienci WHERE login=? AND haslo = ?";
+	prepare stmt from @q;
+	set @haslo = (select md5(haslo));
+	execute stmt using Login, @haslo;
+	SELECT @idKlienta as wynik;
+end
+delimiter ;
+#drop procedure loginKlient;
+call loginKlient("logindad", "haslo" );
+GRANT EXECUTE ON PROCEDURE `rental_company`.loginKlient TO 'user'@'localhost';
+
+delimiter //
+create procedure dodajSkladniki(idTowaru int(11), idZamowienia int(11), startDate DATE, endDate DATE)
+begin
+	insert into skladniki_zamowien (idTowaru, idZamowienia) values (idTowaru, idZamowienia);
+	update towar set odKiedy = startDate, doKiedy = endDate;
+	update towar set koszyk = 0 where id = idTowaru;
+end
+delimiter ;
+drop procedure dodajSkladniki;
+
+insert into zamowienia (status,idKlienta, naKiedy) values ('oczekujace', 1, "2021-02-16");
+call dodajSkladniki(2:idTowaru, 1:idZamowienia);
+
+
+delimiter //
+create procedure ifAvailable(podanyRozmiar int(11), podanyTyp varchar(90), startDate DATE, endDate DATE)
+begin
+	DECLARE idTowaru INT;
+    select id into idTowaru from towar where rozmiar = podanyRozmiar and typ = podanyTyp
+	and startDate > DATE(CURRENT_TIMESTAMP) and ( (startDate < odKiedy and endDate < doKiedy) or (startDate > odKiedy and endDate > doKiedy) or (odKiedy is null and  doKiedy is NULL) )
+	and koszyk = 0 order by id desc limit 1;
+	if idTowaru is null then
+		select 0 into idTowaru;
+	else 
+		update towar set koszyk = 1 where id = idTowaru;
+	end if;
+		select idTowaru as wynik;
+	
+end
+delimiter ;
+drop procedure ifAvailable;
+call ifAvailable(177, 'narty', "2021-02-16", "2021-02-19");
+GRANT EXECUTE ON PROCEDURE `rental_company`.ifAvailable TO 'user'@'localhost';
+GRANT EXECUTE ON PROCEDURE `rental_company`.dodajSkladniki TO 'user'@'localhost';
+
+delimiter //
+create procedure setCart(idTowaru int(11), value int (1))
+begin
+	update towar set koszyk = value where id = idTowaru;
+end
+delimiter ;
+GRANT EXECUTE ON PROCEDURE `rental_company`.setCart TO 'user'@'localhost';
+drop procedure removeFromCart;
+
+call setCart(1,0);
+
+delimiter //
+create procedure getOrderId(clientId int(11))
+begin
+	select MAX(id) as id from zamowienia where idKlienta = clientId;
+end
+delimiter ;
+GRANT EXECUTE ON PROCEDURE `rental_company`.getOrderId TO 'user'@'localhost';
+
+delimiter //
+create procedure createOrder(clientId int(11), kiedy DATE)
+begin
+	insert into zamowienia (idKlienta, naKiedy) values (clientId, kiedy);
+end
+delimiter ;
+GRANT EXECUTE ON PROCEDURE `rental_company`.createOrder TO 'user'@'localhost';

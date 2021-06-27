@@ -1,0 +1,1 @@
+SELECT AVG(Total) avuge, BillingCountry FROM Invoice GROUP BY BillingCountry ORDER BY avuge DESC;
